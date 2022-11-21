@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="lmp" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-in $PROJECT_DIR$/octp_example/simulation.in" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" WORKING_DIR="file://$PROJECT_DIR$/octp_example" PASS_PARENT_ENVS_2="true" PROJECT_NAME="lammps" TARGET_NAME="lmp" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="lammps" RUN_TARGET_NAME="lmp">
+    <envs>
+      <env name="OMP_NUM_THREADS" value="8" />
+    </envs>
+    <method v="2">
+      <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+    </method>
+  </configuration>
+</component>
