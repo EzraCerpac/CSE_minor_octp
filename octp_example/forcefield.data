@@ -1,3 +1,18 @@
+# ----------------- INTERMOLECULAR POTENTIAL -------------------
+# ---------------Developed for LJ test case -------------- -----
+
+mass 1 10.00 # LJ
+
+pair_style lj/cut 5.0
+pair_modify tail yes # ATC 
+
+#-----------------Combinations----------------------------
+		
+pair_coeff 1 1 0.1852 3.1589     # LJ-LJ
+
+
+
+
 #################### FORCE FIELDS ####################
 pair_style lj/cut/coul/long 10.0
 pair_modify mix arithmetic tail yes # ATC + Lorentz-Berthelot

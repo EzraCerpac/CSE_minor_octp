@@ -1,0 +1,3 @@
+#NOTE: MSDs should be divided by the temperature.
+#NOTE: MSDs have been divided by 2 or 10 (i.e., the viscosity computed from all components).
+#Time	MSD_xx	MSD_yy	MSD_zz	MSD_xy	MSD_xz	MSD_yz	MSD_off	MSD_all	MSD_bulkvisc

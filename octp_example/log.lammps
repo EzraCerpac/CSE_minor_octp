@@ -1,10 +1,9 @@
 LAMMPS (23 Jun 2022 - Update 2)
-OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
-  using 1 OpenMP thread(s) per MPI task
+  using 4 OpenMP thread(s) per MPI task
 ####################################################
 # EXAMPLE for using the OCTP plugin
-# Transport properties of an equimolar mixture of
-# water-methanol at 298 K and 1 atm.
+# Transport properties of LJ
+#  at 298 K in NVT (density 50 mol/L)
 #################### SETTING UP ####################
 units real
 dimension 3
@@ -14,34 +13,25 @@ atom_style full
 
 #################### VARIABLES ####################
 variable Temp equal 298       # Temperature in K
-variable Pres equal 1.0       # Pressure in atm.
 
-variable MolMass equal 25.028 # Average molar mass (kg/kmol)
-variable MolAtom equal 3      # Number of atoms in a molecule
 
-variable RandomSeed equal 123 # The random seed for velocity
+variable RandomSeed equal 100 # The random seed for velocity
 variable tstep equal 1.0      # 1fs
-variable Ninptpre equal 10000 # Pre-initialize the NPT ensemble (very small timesteps)
-variable Ninpt equal 50000    # Initialize the NPT ensemble
-variable Npnpt equal 100000   # Production in the NPT ensemble (volume)
-variable Ninvtpre equal 10000 # Pre-initialize the NVT ensemble (very small timesteps)
+
 variable Ninvt equal 50000    # Initialize the NVT ensemble
-variable Npnvt equal 100000   # Production in the NVT ensemble (energy)
-variable Nrun equal 1000000   # production in the NVE ensemble
+variable Nrun equal 100000    # Production in the NVT ensemble (energy)
+
 variable Nf equal 10000       # Nfreq (fix ave/time and thermo)
 variable Ne equal  10         # Nevery (fix ave/time)
 variable Nr equal ${Nf}/${Ne} # Nrepeat (fix ave/time)
 variable Nr equal 10000/${Ne} 
 variable Nr equal 10000/10 
-variable NBR equal ${Npnpt}/5 # Block averaging for density (NPT)
-variable NBR equal 100000/5 
-variable Nd equal ${Npnvt}/10 # Frequency of outputting positions of atoms in the NVT ensemble
+variable Nd equal ${Nrun}/10 # Frequency of outputting positions of atoms in the NVT ensemble
 variable Nd equal 100000/10 
 
 variable nb equal 10          # Number of blocks (fix ordern)
 variable nbe equal 20         # Number of block elements (fix ordern)
 variable Nvisc equal 5        # Nevery for viscosity (fix ordern: sample data at (Nvisc*2))
-variable Ncond equal 5        # Nevery for Tconductivity (fix ordern: sample data at (Ncond*2))
 variable Ndiff equal 1000     # Nevery for diffusivity (fix ordern: sample data at (Ndiff))
 variable Nwrit equal 100000   # Nwrite for transport properties (fix ordern: write every (Nwrit))
 
@@ -50,98 +40,58 @@ variable Nrdfw equal 1000     # Nwrite for RDF (compute rdf/ext: write every (Nr
 variable binnum equal 2000    # Number of bins for RDF
 
 #################### ATOM DEFINITION and FORCEFIELD ####################
-read_data ./data.system                     # read the positions
+read_data ./data.lmp                     # read the positions
 Reading data file ...
-  orthogonal box = (-1.499499 -1.494 -1.498) to (31.500501 31.506 31.502)
+  orthogonal box = (0 0 0) to (3.214374 3.214374 3.214374)
   1 by 1 by 1 MPI processor grid
   reading atoms ...
-  1500 atoms
-  scanning bonds ...
-  2 = max bonds/atom
-  scanning angles ...
-  1 = max angles/atom
-  reading bonds ...
-  1000 bonds
-  reading angles ...
-  500 angles
+  1 atoms
 Finding 1-2 1-3 1-4 neighbors ...
   special bond factors lj:    0        0        0       
   special bond factors coul:  0        0        0       
-     2 = max # of 1-2 neighbors
-     1 = max # of 1-3 neighbors
-     1 = max # of 1-4 neighbors
-     2 = max # of special neighbors
-  special bonds CPU = 0.001 seconds
-  read_data CPU = 0.066 seconds
-include forcefield.data                     # read the force field
-#################### FORCE FIELDS ####################
-pair_style lj/cut/coul/long 10.0
-pair_modify mix arithmetic tail yes # ATC + Lorentz-Berthelot
-kspace_style pppm 1e-6
-bond_style harmonic
-angle_style harmonic
-dihedral_style none
-improper_style none
-#special_bonds lj 0.0 0.0 0.0 coul 0.0 0.0 0.0 dihedral no
+     0 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     0 = max # of 1-4 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  read_data CPU = 0.017 seconds
+include ./forcefield.data                # read the force field
+# ----------------- INTERMOLECULAR POTENTIAL -------------------
+# ---------------Developed for LJ test case -------------- -----
 
-# Pair Coeffs
-#
-# 1  C3
-# 2  H
-# 3  Hw
-# 4  O
-# 5  Ow
-pair_coeff 1 1 0.19475 3.75
-pair_coeff 2 2 0.0 0.0
-pair_coeff 3 3 0.0 0.0
-pair_coeff 4 4 0.18481 3.02
-pair_coeff 5 5 0.15535 3.166
+mass 1 10.00 # LJ
 
-# Bond Coeffs
-#
-# 1  C3-O
-# 2  H-O
-# 3  Hw-Ow
-bond_coeff 1 1000.0 1.430 	#shake
-bond_coeff 2 1000.0 0.945	#shake
-bond_coeff 3 1000.0 1.000	#shake
+pair_style lj/cut 5.0
+pair_modify tail yes # ATC
 
-# Angle Coeffs
-#
-# 1  C3-O-H
-# 2  Hw-Ow-Hw
-angle_coeff 1 55.0  108.5
-angle_coeff 2 100.0 109.47	#shake
+#-----------------Combinations----------------------------
 
-# Charges of the atoms
-#
-# 1  C3
-# 2  H
-# 3  Hw
-# 4  O
-# 5  Ow
-set type 1 charge +0.265	# TraPPE
-Setting atom values ...
-  250 settings made for charge
-set type 2 charge +0.435	# TraPPE
-Setting atom values ...
-  250 settings made for charge
-set type 3 charge +0.4238	# SPC/E
-Setting atom values ...
-  500 settings made for charge
-set type 4 charge -0.700	# TraPPE
-Setting atom values ...
-  250 settings made for charge
-set type 5 charge -0.8476	# SPC/E
-Setting atom values ...
-  250 settings made for charge
+pair_coeff 1 1 0.1852 3.1589     # LJ-LJ
+
+
+
+
+
+
+replicate 8 8 8
+Replicating atoms ...
+  orthogonal box = (0 0 0) to (25.714992 25.714992 25.714992)
+  1 by 1 by 1 MPI processor grid
+  512 atoms
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0       
+  special bond factors coul:  0        0        0       
+     0 = max # of 1-2 neighbors
+     0 = max # of 1-3 neighbors
+     0 = max # of 1-4 neighbors
+     1 = max # of special neighbors
+  special bonds CPU = 0.000 seconds
+  replicate CPU = 0.005 seconds
 
 #################### INITIALIZATION ####################
-# groups for the central atoms of water (O) and methanol (O)
-group wat type 5      # The Oxygen of WATER molecules
-250 atoms in group wat
-group met type 4      # The Oxygen of METHANOL molecules
-250 atoms in group met
+# groups for the central atoms of water (O)
+group LJ type 1      # The Oxygen of WATER molecules
+512 atoms in group LJ
 
 # neigbor lists
 neighbor 2.0 bin
@@ -150,70 +100,130 @@ neigh_modify every 1 delay 0 check yes
 # velocity-Verlet integrator
 run_style verlet
 
-# minimizing the system using the conjugate gradient method
-min_style cg
-min_modify dmax 0.05
-minimize 1.0e-6 1.0e-6 1000 10000
-PPPM initialization ...
-  using 12-bit tables for long-range coulomb (src/kspace.cpp:342)
-  G vector (1/distance) = 0.32821011
-  grid = 40 40 40
-  stencil order = 5
-  estimated absolute RMS force accuracy = 0.00038414621
-  estimated relative force accuracy = 1.1568449e-06
-  using double precision FFTW3
-  3d grid and FFT values/proc = 103823 64000
-Generated 10 of 10 mixed pair_coeff terms from arithmetic mixing rule
+# initializing velocities
+velocity all create ${Temp} ${RandomSeed}
+velocity all create 298 ${RandomSeed}
+velocity all create 298 100
+
+# rate of writing thermal properties to the log file
+thermo ${Nf}
+thermo 10000
+
+# run in  NVT
+fix integrate all nvt temp ${Temp} ${Temp} 100.0
+fix integrate all nvt temp 298 ${Temp} 100.0
+fix integrate all nvt temp 298 298 100.0
+
+# initialize the system in NVT
+timestep ${tstep}
+timestep 1
+run ${Ninvt}
+run 50000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
 Neighbor list info ...
   update every 1 steps, delay 0 steps, check yes
   max neighbors/atom: 2000, page size: 100000
-  master list distance cutoff = 12
-  ghost atom cutoff = 12
-  binsize = 6, bins = 6 6 6
+  master list distance cutoff = 7
+  ghost atom cutoff = 7
+  binsize = 3.5, bins = 8 8 8
   1 neighbor lists, perpetual/occasional/extra = 1 0 0
-  (1) pair lj/cut/coul/long, perpetual
+  (1) pair lj/cut, perpetual
       attributes: half, newton on
       pair build: half/bin/newton
       stencil: half/bin/3d
       bin: standard
-Per MPI rank memory allocation (min/avg/max) = 18.67 | 18.67 | 18.67 Mbytes
+Per MPI rank memory allocation (min/avg/max) = 8.7 | 8.7 | 8.7 Mbytes
    Step          Temp          E_pair         E_mol          TotEng         Press     
-         0   0             -648.95582      0.18870006    -648.76712     -109.95363    
-      1000   0             -5662.5296      150.36961     -5512.1599     -2055.5515    
-Loop time of 57.2946 on 1 procs for 1000 steps with 1500 atoms
+         0   298           -515.15927      0             -61.247481      4777.4276    
+     10000   312.57813     -383.73636      0              92.380749      7237.4947    
+     20000   283.18599     -371.54554      0              59.801641      7374.2373    
+     30000   296.38551     -375.02002      0              76.43259       7301.8665    
+     40000   300.13187     -414.74982      0              42.409223      6593.9926    
+     50000   308.83828     -370.23399      0              100.1866       7469.1063    
+Loop time of 17.7666 on 4 procs for 50000 steps with 512 atoms
 
-98.1% CPU use with 1 MPI tasks x 1 OpenMP threads
-
-Minimization stats:
-  Stopping criterion = max iterations
-  Energy initial, next-to-last, final = 
-     -648.767118180294  -5511.69250013074  -5512.15994368102
-  Force two-norm initial, final = 227.07219 22.723335
-  Force max component initial, final = 23.089719 8.5134281
-  Final line search alpha, max atom move = 0.00039603178 0.0033715881
-  Iterations, force evaluations = 1000 1815
+Performance: 243.152 ns/day, 0.099 hours/ns, 2814.262 timesteps/s
+96.3% CPU use with 1 MPI tasks x 4 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 23.542     | 23.542     | 23.542     |   0.0 | 41.09
-Bond    | 0.21431    | 0.21431    | 0.21431    |   0.0 |  0.37
-Kspace  | 32.767     | 32.767     | 32.767     |   0.0 | 57.19
-Neigh   | 0.37056    | 0.37056    | 0.37056    |   0.0 |  0.65
-Comm    | 0.19673    | 0.19673    | 0.19673    |   0.0 |  0.34
-Output  | 4.5126e-05 | 4.5126e-05 | 4.5126e-05 |   0.0 |  0.00
-Modify  | 0          | 0          | 0          |   0.0 |  0.00
-Other   |            | 0.204      |            |       |  0.36
+Pair    | 14.049     | 14.049     | 14.049     |   0.0 | 79.07
+Bond    | 0.010953   | 0.010953   | 0.010953   |   0.0 |  0.06
+Neigh   | 0.98442    | 0.98442    | 0.98442    |   0.0 |  5.54
+Comm    | 1.1396     | 1.1396     | 1.1396     |   0.0 |  6.41
+Output  | 0.00017872 | 0.00017872 | 0.00017872 |   0.0 |  0.00
+Modify  | 1.2652     | 1.2652     | 1.2652     |   0.0 |  7.12
+Other   |            | 0.3175     |            |       |  1.79
 
-Nlocal:           1500 ave        1500 max        1500 min
+Nlocal:            512 ave         512 max         512 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
-Nghost:           6318 ave        6318 max        6318 min
+Nghost:           1377 ave        1377 max        1377 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
-Neighs:         225932 ave      225932 max      225932 min
+Neighs:          11137 ave       11137 max       11137 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
 
-Total # of neighbors = 225932
-Ave neighs/atom = 150.62133
-Ave special neighs/atom = 2
-Neighbor list builds = 20
+Total # of neighbors = 11137
+Ave neighs/atom = 21.751953
+Ave special neighs/atom = 0
+Neighbor list builds = 920
 Dangerous builds = 0
+reset_timestep 0
+
+
+#################### 2) Simulating transport properties, RDFs, and energy/temp in NVT ensmeble #################
+# computing average total energy, pontential energy, temperature, and pressure over time
+variable TotEn equal etotal
+fix TEAve all ave/time ${Ne} ${Nr} ${Nf} v_TotEn file TotalE.dat
+fix TEAve all ave/time 10 ${Nr} ${Nf} v_TotEn file TotalE.dat
+fix TEAve all ave/time 10 1000 ${Nf} v_TotEn file TotalE.dat
+fix TEAve all ave/time 10 1000 10000 v_TotEn file TotalE.dat
+
+variable PotEn equal pe
+fix PEAve all ave/time ${Ne} ${Nr} ${Nf} v_PotEn file PotenE.dat
+fix PEAve all ave/time 10 ${Nr} ${Nf} v_PotEn file PotenE.dat
+fix PEAve all ave/time 10 1000 ${Nf} v_PotEn file PotenE.dat
+fix PEAve all ave/time 10 1000 10000 v_PotEn file PotenE.dat
+
+compute T all temp
+fix TempAve all ave/time ${Ne} ${Nr} ${Nf} c_T file temperature.dat
+fix TempAve all ave/time 10 ${Nr} ${Nf} c_T file temperature.dat
+fix TempAve all ave/time 10 1000 ${Nf} c_T file temperature.dat
+fix TempAve all ave/time 10 1000 10000 c_T file temperature.dat
+
+compute P all pressure T
+fix PressAve all ave/time ${Ne} ${Nr} ${Nf} c_P file pressure.dat
+fix PressAve all ave/time 10 ${Nr} ${Nf} c_P file pressure.dat
+fix PressAve all ave/time 10 1000 ${Nf} c_P file pressure.dat
+fix PressAve all ave/time 10 1000 10000 c_P file pressure.dat
+
+
+# computing self-diffusion and Onsager coefficients using the OCTP plugin
+compute positions all position
+fix f3 all ordern diffusivity ${Ndiff} ${Nwrit} c_positions nb ${nb} nbe ${nbe} file diffself.dat diffonsag.dat
+fix f3 all ordern diffusivity 1000 ${Nwrit} c_positions nb ${nb} nbe ${nbe} file diffself.dat diffonsag.dat
+fix f3 all ordern diffusivity 1000 100000 c_positions nb ${nb} nbe ${nbe} file diffself.dat diffonsag.dat
+fix f3 all ordern diffusivity 1000 100000 c_positions nb 10 nbe ${nbe} file diffself.dat diffonsag.dat
+fix f3 all ordern diffusivity 1000 100000 c_positions nb 10 nbe 20 file diffself.dat diffonsag.dat
+
+
+# computing shear and bulk viscosities  using the OCTP plugin
+fix f1 all ordern viscosity ${Nvisc} ${Nwrit} c_P nb ${nb} nbe ${nbe} file viscosity.dat
+fix f1 all ordern viscosity 5 ${Nwrit} c_P nb ${nb} nbe ${nbe} file viscosity.dat
+fix f1 all ordern viscosity 5 100000 c_P nb ${nb} nbe ${nbe} file viscosity.dat
+fix f1 all ordern viscosity 5 100000 c_P nb 10 nbe ${nbe} file viscosity.dat
+fix f1 all ordern viscosity 5 100000 c_P nb 10 nbe 20 file viscosity.dat
+
+# computing the RDF for all group pairs
+compute rdfs all rdf/ext Nbin ${binnum} Nwrite ${Nrdfw} file rdf.dat
+compute rdfs all rdf/ext Nbin 2000 Nwrite ${Nrdfw} file rdf.dat
+compute rdfs all rdf/ext Nbin 2000 Nwrite 1000 file rdf.dat
+fix f4 all ave/time 1 1 ${Nrdfe} c_rdfs
+fix f4 all ave/time 1 1 100 c_rdfs
+
+# compute the RDF with fix method
+fix f5 all rdf 0.0 2.0 ${binnum} ${Nrdfw} file rdf_fix.dat
+fix f5 all rdf 0.0 2.0 2000 ${Nrdfw} file rdf_fix.dat
+fix f5 all rdf 0.0 2.0 2000 1000 file rdf_fix.dat
+ERROR: Expected integer parameter instead of '0.0' in input script or data file (src/fix_rdf.cpp:34)
+Last command: fix f5 all rdf 0.0 2.0 ${binnum} ${Nrdfw} file rdf_fix.dat
