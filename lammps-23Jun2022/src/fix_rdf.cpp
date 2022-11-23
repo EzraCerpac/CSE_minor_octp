@@ -16,6 +16,8 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
+// TODO: different pair types
+
 #include "fix_rdf.h"
 
 #include "atom.h"
@@ -32,9 +34,12 @@ FixRDF::FixRDF(LAMMPS *lmp, int narg, char **arg) :
     if (narg < 6) error->all(FLERR, "Illegal fix rdf command");
 
     nbin = utils::inumeric(FLERR, arg[3], false, lmp);
+    // max ragne/  cutoff
+    // output file
 
 //    minTimestep = 20000;
-    Temp = 299;             // Find method to get this
+    Temp = 299;             // Find method to get this -> Temp compute
+    // compute T all temp in sim.in
     Box = 10;               // Random number, Find method to get this
     natom = atom->natoms;
 
