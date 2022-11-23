@@ -4,6 +4,8 @@
 #include <string.h>
 #include <math.h>
 
+#define GAS_CONST 8.3144626181
+#define KCAL2JOULE 4184.0
 #define MAXLINE 1024
 #define BinNum 3000
 #define Delta 0.005
@@ -101,12 +103,46 @@ int parse_dump_timestep(FILE *stream, long *Timestep, long *NumberOfParticles,
 }
 
 
+double get_temp(long timestep, char *fname) 
+{
+    /**
+     * @brief Get the temperature from a LAMMPS fix ave/time file
+     * @param timestep Timestep to get the temperature for
+     * @param fname Name of the log file
+     * @return Temperature at the given timestep
+     */
+    FILE *fp;
+    char buffer[MAXLINE];
+    double Temp;
+    long Time;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+      fprintf(stderr, "Could not open logfile %s.\n", fname);
+      exit(1);
+    }
+
+    while (fgets(buffer, MAXLINE, fp) != NULL) {
+        if (buffer[0] != '#') {
+            sscanf(buffer, "%ld %lf", &Time, &Temp);
+            if (Time == timestep) {
+                fclose(fp);
+                return Temp;
+            }
+        }
+    }   
+    fclose(fp);
+    fprintf(stderr, "Could not find temperature for timestep %ld.\n", timestep);
+    exit(1);
+}
+
+
 void sample_rdf(long NumberOfParticles, double Box, double g[], double Rxx[], 
                 double Ryy[], double Rzz[], double Fxx[], double Fyy[], 
                 double Fzz[]) 
 {
     /**
-     * @brief Sample the radial distribution function of the system in array g 
+     * @brief Sample the radial distribution function of the system in array g, using exactly the method from the Fortran code 
 
      * @param NumberOfParticles Number of particles in the system
      * @param Box Size of the box
@@ -128,6 +164,9 @@ void sample_rdf(long NumberOfParticles, double Box, double g[], double Rxx[],
 
     for(i=0;i<NumberOfParticles;i++) {
         for(j=i+1;j<NumberOfParticles;j++) {
+            if (i==j){
+                continue;
+            }
             
             // Calculate the distance between the two particles, R, accounting
             // for periodic boundary conditions
@@ -170,21 +209,27 @@ void sample_rdf(long NumberOfParticles, double Box, double g[], double Rxx[],
     }
 }
 
-int main()
+
+int main(int argc, char *argv[])
 {
     FILE *fp;
     int status;
     long NumberOfParticles, i, k, n, timestep, nTimesteps, minTimestep;
     double Temp, c, Box, R, *Rxx, *Ryy, *Rzz, *Fxx, *Fyy, *Fzz, *g, *gavg;
 
-    minTimestep = 20000;
-    Temp = 299;
+    if (argc != 4) {
+        fprintf(stderr, "Usage: %s <dump file> <log file> <output file>\n", argv[0]);
+        exit(1);
+    }
+
+
+    minTimestep = 30000;
     n = 1728;
     
-    fp = fopen("dump", "r");
+    fp = fopen(argv[1], "r");
     if (fp == NULL) {
-        fprintf(stderr, "Could not open file 'dump'\n");
-        return 1;
+        fprintf(stderr, "Could not open dump file %s'\n", argv[1]);
+        exit(1);
     }
 
     Rxx = (double *) calloc(n, sizeof(double));
@@ -197,17 +242,20 @@ int main()
     gavg = (double *) calloc(BinNum, sizeof(double));    
 
     nTimesteps = 0;
-    while (feof(fp) == 0) {
+    while (feof(fp) == 0) { 
         status = parse_dump_timestep(fp, &timestep, &NumberOfParticles, &Box, n, 
                                     Rxx, Ryy, Rzz, Fxx, Fyy, Fzz);
 
         if ((status == 0) && (timestep >= minTimestep)) {
             sample_rdf(NumberOfParticles, Box, g, Rxx, Ryy, Rzz, Fxx, Fyy, Fzz);
-            c = Box*Box*Box / (2 * M_PI * Temp * NumberOfParticles*NumberOfParticles); 
-            // TODO: read the correct Temp for each timestep from temperature.dat
+            Temp = get_temp(timestep, argv[2]);
+
+            c = Box*Box*Box / (2 * M_PI * Temp * NumberOfParticles*NumberOfParticles) * KCAL2JOULE/GAS_CONST; 
+
             for (k = 0; k < BinNum; k++) {
                 gavg[k] += g[k] * c;
             }
+
             nTimesteps++;
         }
     }
@@ -221,7 +269,11 @@ int main()
     fclose(fp);
 
     // Write the rdf to a file
-    fp = fopen("frdf.dat", "w");
+    fp = fopen(argv[3], "w");
+    if (fp == NULL) {
+        fprintf(stderr, "Could not open output file %s'\n", argv[3]);
+        exit(1);
+    }
     for (i = 0; i < BinNum; i++) {
         R = (i + 0.5) * Delta;
         if (R < Box/2.0){

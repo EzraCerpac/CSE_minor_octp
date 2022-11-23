@@ -1,0 +1,14 @@
+CC = gcc
+TARGET = frdf frdf_origional
+
+all: $(TARGET)
+
+frdf: force_rdf.c
+	$(CC) -g -Wall force_rdf.c -lm -o frdf -Wno-unused-result -O3
+
+frdf_original: force_rdf_original.c
+	$(CC) -Wall force_rdf_original.c -lm -o frdf_original -Wno-unused-result -O3
+
+# Path: makefile
+clean:
+	rm -f $(TARGET)
