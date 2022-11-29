@@ -13,7 +13,7 @@
 
 #ifdef COMPUTE_CLASS
 // clang-format off
-ComputeStyle(rdf,ComputeRDFForce);
+ComputeStyle(rdf/force,ComputeRDFForce);
 // clang-format on
 #else
 
@@ -36,6 +36,7 @@ class ComputeRDFForce : public Compute {
   int nbin;                // # of rdf bins
   int cutflag;             // user cutoff flag
   int npairs;              // # of rdf pairs
+  double t;                // temperature
   double delr, delrinv;    // bin width and its inverse
   double cutoff_user;      // user-specified cutoff
   double mycutneigh;       // user-specified cutoff + neighbor skin
