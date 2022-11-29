@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
     Fxx = (double *) NULL, Fyy = (double *) NULL, Fzz = (double *) NULL;
 
     if (argc < 4) {
-        fprintf(stderr, "Usage: %s <dump file> <log file> <output file> \
+        fprintf(stderr, "Usage: %s <dump file> <Temp log file> <output file> \
                         (optional)<minimum timestep>\n", argv[0]);
         exit(1);
     }
