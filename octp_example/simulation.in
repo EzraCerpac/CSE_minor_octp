@@ -94,7 +94,7 @@ fix f1 all ordern viscosity ${Nvisc} ${Nwrit} c_P nb ${nb} nbe ${nbe} file visco
 compute rdfs all rdf/ext Nbin ${binnum} Nwrite ${Nrdfw} file rdf.dat
 fix f4 all ave/time 1 1 ${Nrdfe} c_rdfs
 
-fix f1 all rdf
+compute rdff all rdf/force ${binnum}
 
 # Thermo style for outputing system properties to the log file
 thermo_style custom step temp f_TempAve press f_PressAve pe ke etotal

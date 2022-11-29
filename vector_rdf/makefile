@@ -1,7 +1,15 @@
 CC = gcc
-TARGET = frdf frdf_origional
+TARGET = frdf frdf_original
+
+DUMPFILE = frdf.dump
+LOGFILE = frdf.log
+OUTPUTFILE = frdf.output
+MINTIMESTEP = 0.0001
 
 all: $(TARGET)
+
+run: frdf
+	./frdf $(DUMPFILE) $(LOGFILE) $(OUTPUTFILE) $(MINTIMESTEP)
 
 frdf: force_rdf.c
 	$(CC) -g -Wall force_rdf.c -lm -o frdf -Wno-unused-result -O3

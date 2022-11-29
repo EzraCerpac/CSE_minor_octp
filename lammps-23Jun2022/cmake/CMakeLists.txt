@@ -182,7 +182,7 @@ include(GNUInstallDirs)
 file(GLOB ALL_SOURCES ${LAMMPS_SOURCE_DIR}/[^.]*.cpp)
 file(GLOB MAIN_SOURCES ${LAMMPS_SOURCE_DIR}/main.cpp)
 list(REMOVE_ITEM ALL_SOURCES ${MAIN_SOURCES})
-add_library(lammps ${ALL_SOURCES} ../src/fix_rdf.cpp ../src/fix_rdf.h)
+add_library(lammps ${ALL_SOURCES} ../src/compute_rdf_force.cpp ../src/compute_rdf_force.h)
 
 # tell CMake to export all symbols to a .dll on Windows with MinGW cross-compilers
 if(BUILD_SHARED_LIBS AND (CMAKE_SYSTEM_NAME STREQUAL "Windows") AND CMAKE_CROSSCOMPILING)

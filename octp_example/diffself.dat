@@ -1,28 +1,3 @@
 #NOTE: MSDs should be divided by the number of molecules of species i (N_i).
 #NOTE: MSDs have been divided by the factor 6 (or 2, i.e., MSD_x, MSD_y, and MSD_z).
-#Time	MSD__LJ	
- 1000 567.182
- 2000 1162.99
- 3000 1753.41
- 4000 2349.68
- 5000 2935.8
- 6000 3523.74
- 7000 4118.2
- 8000 4716.47
- 9000 5311.21
- 10000 5908.61
- 11000 6503.58
- 12000 7097.19
- 13000 7695.53
- 14000 8295.03
- 15000 8887.93
- 16000 9480.24
- 17000 10070.8
- 18000 10660.7
- 19000 11249.7
- 20000 11833.4
- 20000 11831.3
- 40000 23119.2
- 60000 34142.7
- 80000 45285.3
- 100000 57219.7
+#NOTE: MSDs have been divided by the factor 6 (or 2, i.e., MSD_x, MSD_y, and MSD_z).
