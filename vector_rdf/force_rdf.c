@@ -4,10 +4,11 @@
 #include <string.h>
 #include <math.h>
 
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define GAS_CONST 8.3144626181
 #define KCAL2JOULE 4184.0
 #define MAXLINE 1024
-#define BinNum 3000
+#define BinNum 5000
 #define Delta 0.005
 
 int parse_dump_timestep(FILE *stream, long *Timestep, long *NumberOfParticles, 
@@ -173,8 +174,8 @@ void sample_rdf(long NumberOfParticles, double Box, double g[], double Rxx[],
      * @param Fzz Array of z components of the forces on the particles
      */
     long i, j, k;
-    double Dx, Dy, Dz, Rij, Ff, R;
-    double HalfBox = Box/2.0;
+    double Dx, Dy, Dz, Rij, Ff, sum=0.0;
+    double HalfBox=Box/2.0;
 
     for (i = 0; i < BinNum; i++) {
         g[i] = 0.0;
@@ -211,15 +212,23 @@ void sample_rdf(long NumberOfParticles, double Box, double g[], double Rxx[],
             // RDF is only valid till half the box size
             if (Rij < HalfBox) {
                 Ff = ((Fxx[i]-Fxx[j])*Dx + (Fyy[i]-Fyy[j])*Dy + (Fzz[i]-Fzz[j])*Dz) / (Rij*Rij*Rij);
-
-                for (k = 0; k < BinNum; k++) {
-                    R = (k + 0.5) * Delta;
-
-                if (R < HalfBox && R > Rij)
-                    g[k] += Ff;
+                
+                // R = (k+0.5)*Delta
+                // smallest k for R > Rij
+                k = ceil(Rij / Delta - 0.5);
+                
+                if (k < BinNum) { 
+                    g[k] += Ff; 
+                    // only add Ff to the smallest k for now, should be added to all k's where R>Rij but this is done later all at once
                 }
             }
         }
+    }
+
+    // Cumulative sum because of the heaviside function
+    for (i = 0; i < BinNum; i++) {
+        sum += g[i];
+        g[i] = sum;
     }
 }
 
