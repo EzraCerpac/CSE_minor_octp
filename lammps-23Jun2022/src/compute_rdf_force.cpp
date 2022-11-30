@@ -365,12 +365,6 @@ void ComputeRDFForce::compute_array() {
                 m = rdfpair[ihisto][itype][jtype];
                 hist[m][ibin] += Ff;
             }
-            if (newton_pair || j < nlocal) {
-                for (ihisto = 0; ihisto < jpair; ihisto++) {
-                    m = rdfpair[ihisto][jtype][itype];
-                    hist[m][ibin] += Ff;
-                }
-            }
         }
     }
 
