@@ -324,6 +324,8 @@ void ComputeRDFForce::compute_array() {
     double *special_lj = force->special_lj;
     int newton_pair = force->newton_pair;
 
+    double Box, HalfBox;
+
     for (ii = 0; ii < inum; ii++) {
         i = ilist[ii];
         if (!(mask[i] & groupbit)) continue;
@@ -352,11 +354,34 @@ void ComputeRDFForce::compute_array() {
             jpair = nrdfpair[jtype][itype];
             if (!ipair && !jpair) continue;
 
+            Box = domain->xprd;
+            HalfBox = Box/2.0;
+
             delx = xtmp - x[j][0];
             dely = ytmp - x[j][1];
             delz = ztmp - x[j][2];
+
+            if (delx > HalfBox) {
+                delx = delx - Box;
+            } else if (delx < -HalfBox) {
+                delx = delx + Box;
+            }
+
+            if (dely > HalfBox) {
+                dely = dely - Box;
+            } else if (dely< -HalfBox) {
+                dely = dely + Box;
+            }
+
+            if (delz > HalfBox) {
+                delz = delz - Box;
+            } else if (delz < -HalfBox) {
+                delz = delz + Box;
+            }
+
             // No box checks implemented
             r = sqrt(delx * delx + dely * dely + delz * delz);
+            if (r > HalfBox) continue;
             Ff = ((f[i][0] - f[j][0]) * delx + (f[i][1] - f[j][1]) * dely + (f[i][2] - f[j][2]) * delz) / (r * r * r);
             ibin = static_cast<int> (r * delrinv);
             if (ibin >= nbin) continue;
