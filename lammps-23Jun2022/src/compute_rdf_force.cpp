@@ -24,6 +24,7 @@
 #include "error.h"
 #include "force.h"
 #include "group.h"
+#include "KIM/kim_units.h"
 #include "math_const.h"
 #include "memory.h"
 #include "modify.h"
@@ -385,7 +386,10 @@ void ComputeRDFForce::compute_array() {
     double constant, vfrac, gr, ncoord, rlower, rupper, normfac;
 
     if (domain->dimension == 3) {
-        constant = 4.0 * MY_PI / (3.0 * domain->xprd * domain->yprd * domain->zprd);
+        constant = domain->xprd * domain->yprd * domain->zprd /
+                (8.3144626181 * 4 * MY_PI * t * atom->natoms * atom->natoms);
+//        lammps_unit_conversion("energy", "kcal", "J", constant);
+        constant *= 4184.;
 
         for (m = 0; m < npairs; m++) {
             double sum = 0.0;
@@ -393,19 +397,10 @@ void ComputeRDFForce::compute_array() {
                 sum += histall[m][ibin];
                 histall[m][ibin] = sum;
             }
-
-            normfac = (icount[m] > 0) ? static_cast<double>(jcount[m])
-                                        - static_cast<double>(duplicates[m]) / icount[m] : 0.0;
             ncoord = 0.0;
             for (ibin = 0; ibin < nbin; ibin++) {
-                rlower = ibin * delr;
-                rupper = (ibin + 1) * delr;
-                vfrac = constant * (rupper * rupper * rupper - rlower * rlower * rlower);
-                if (vfrac * normfac != 0.0)
-                    gr = histall[m][ibin] / (vfrac * normfac * icount[m] * t);
-                else gr = 0.0;
-                if (icount[m] != 0)
-                    ncoord += gr * vfrac * normfac;
+                gr = histall[m][ibin] * constant;
+                ncoord += gr;
                 array[ibin][1 + 2 * m] = gr;
                 array[ibin][2 + 2 * m] = ncoord;
             }

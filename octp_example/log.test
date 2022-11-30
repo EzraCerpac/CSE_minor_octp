@@ -1,5 +1,6 @@
 compute rdff all rdf/force ${binnum}
 compute rdff all rdf/force 2000
-fix f5 all ave/time 1 1 ${Nrdfe} c_rdff[*] file rdf_force.dat mode vector
-fix f5 all ave/time 1 1 100 c_rdff[*] file rdf_force.dat mode vector
+fix f5 all ave/time ${Nrdfe} 1 ${Nrun} c_rdff[*] file rdf_force.dat mode vector
+fix f5 all ave/time 100 1 ${Nrun} c_rdff[*] file rdf_force.dat mode vector
+fix f5 all ave/time 100 1 100000 c_rdff[*] file rdf_force.dat mode vector
 log log.lammps
