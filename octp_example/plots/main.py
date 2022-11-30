@@ -7,7 +7,7 @@ import pickle
 
 def main():
     path = "data.pkl"
-    reload = True if input("Reload data? [y/N]: ") == "y" else False
+    reload = True #if input("Reload data? [y/N]: ") == "y" else False
     if reload:
         rdf_octp, rdf_force = load_data(path)
     else:
@@ -29,7 +29,7 @@ def main():
 
 def load_data(path: str = 'data.pkl') -> tuple[np.ndarray, np.ndarray]:
     rdf_octp = np.loadtxt('../rdf.dat', max_rows=2000)
-    rdf_force = np.loadtxt('../rdf_force.dat', skiprows=2005, max_rows=2000)
+    rdf_force = np.loadtxt('../rdf_force.dat', skiprows=4, max_rows=2000)
     with open(path, 'wb') as f:
         pickle.dump((rdf_octp, rdf_force), f)
     return rdf_octp, rdf_force
