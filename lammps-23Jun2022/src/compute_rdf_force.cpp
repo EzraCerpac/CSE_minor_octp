@@ -387,19 +387,16 @@ void ComputeRDFForce::compute_array() {
 
     if (domain->dimension == 3) {
         constant = domain->xprd * domain->yprd * domain->zprd /
-                (8.3144626181 * 4 * MY_PI * t * atom->natoms * atom->natoms);
+                (8.3144626181 * 4 * MY_PI * t);
 //        lammps_unit_conversion("energy", "kcal", "J", constant);
         constant *= 4184.;
 
         for (m = 0; m < npairs; m++) {
             double sum = 0.0;
-            for (ibin = 0; ibin < nbin; ibin++) {
-                sum += histall[m][ibin];
-                histall[m][ibin] = sum;
-            }
             ncoord = 0.0;
             for (ibin = 0; ibin < nbin; ibin++) {
-                gr = histall[m][ibin] * constant;
+                sum += histall[m][ibin];
+                gr = sum * constant / (icount[m]*jcount[m]-duplicates[m]);
                 ncoord += gr;
                 array[ibin][1 + 2 * m] = gr;
                 array[ibin][2 + 2 * m] = ncoord;
