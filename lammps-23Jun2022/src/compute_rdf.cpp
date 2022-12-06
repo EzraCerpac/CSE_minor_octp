@@ -48,8 +48,9 @@ ComputeRDF::ComputeRDF(LAMMPS *lmp, int narg, char **arg) :
 {
   if (narg < 4) error->all(FLERR,"Illegal compute rdf command");
 
-  array_flag = 1;
-  extarray = 0;
+  array_flag = 1; // flag in Compute parent class, indicates that this class has compute_array() method
+  extarray = 0;  // flag in Compute parent class, indicates result is not dependent on number of atoms and doesn't need to
+                // be normalized by number of atoms
 
   nbin = utils::inumeric(FLERR,arg[3],false,lmp);
   if (nbin < 1) error->all(FLERR,"Illegal compute rdf command");
@@ -57,17 +58,19 @@ ComputeRDF::ComputeRDF(LAMMPS *lmp, int narg, char **arg) :
   // optional args
   // nargpair = # of pairwise args, starting at iarg = 4
 
-  cutflag = 0;
+  cutflag = 0;  // flag for whether cutoff is specified, set to 0 by default and then
+                // might be changed when arguments are read
 
   int iarg;
   for (iarg = 4; iarg < narg; iarg++)
     if (strcmp(arg[iarg],"cutoff") == 0) break;
 
-  int nargpair = iarg - 4;
+  int nargpair = iarg - 4;  // nargpair number of arguments specifying pairs of atom types
 
-  while (iarg < narg) {
+  // I think the point of the extra checks below is if cutoff is specified multiple times, the last one will be used
+  while (iarg < narg) { // only if cutoff was one of the arguments iarg will be less than narg
     if (strcmp(arg[iarg],"cutoff") == 0) {
-      if (iarg+2 > narg) error->all(FLERR,"Illegal compute rdf command");
+      if (iarg+2 > narg) error->all(FLERR,"Illegal compute rdf command"); // too many arguments
       cutoff_user = utils::numeric(FLERR,arg[iarg+1],false,lmp);
       if (cutoff_user <= 0.0) cutflag = 0;
       else cutflag = 1;
@@ -75,29 +78,39 @@ ComputeRDF::ComputeRDF(LAMMPS *lmp, int narg, char **arg) :
     } else error->all(FLERR,"Illegal compute rdf command");
   }
 
+
   // pairwise args
 
-  if (nargpair == 0) npairs = 1;
+  if (nargpair == 0) npairs = 1; // do the RDF with all atoms, only 1 hist
   else {
-    if (nargpair % 2) error->all(FLERR,"Illegal compute rdf command");
+    if (nargpair % 2) error->all(FLERR,"Illegal compute rdf command"); // nargpair must be even
     npairs = nargpair/2;
   }
 
+  // These are variables of parent class Compute
   size_array_rows = nbin;
-  size_array_cols = 1 + 2*npairs;
+  size_array_cols = 1 + 2*npairs; // 1 is for r, 2*npairs for each pair of atom types
 
-  int ntypes = atom->ntypes;
+  // The rest of the code is to deal with difficulty that the itypes and jtypes can be ranges with wildcards
+
+  int ntypes = atom->ntypes; // number of atom types in the simulation
   memory->create(rdfpair,npairs,ntypes+1,ntypes+1,"rdf:rdfpair");
   memory->create(nrdfpair,ntypes+1,ntypes+1,"rdf:nrdfpair");
+  // nrdfpair is a 2d array that specifies for every possible combination of atom types, how many histograms
+  // that pair occurs in.
+  // rdfpair is to be able to find the indices of the histograms that a pair of atom types occurs in.
+  // If nrdfpair[i][j] = 2, then rdfpair[n][i][j] is undefined for n greater than 1
+  // nrdf pair is a summed version of rdfpair along the first dimension
+  // each pair has an ilow, ihigh, jlow, jhigh in case the argument passed by the user is a range
   ilo = new int[npairs];
   ihi = new int[npairs];
   jlo = new int[npairs];
   jhi = new int[npairs];
 
-  if (nargpair == 0) {
+  if (nargpair == 0) { // if no arguments were passed, then do the RDF with all atoms
     ilo[0] = 1; ihi[0] = ntypes;
     jlo[0] = 1; jhi[0] = ntypes;
-  } else {
+  } else { // set each ilo, ihi, jlo, jhi whilst checking for errors in range, wildcards, etc
     iarg = 4;
     for (int ipair = 0; ipair < npairs; ipair++) {
       utils::bounds(FLERR,arg[iarg],1,atom->ntypes,ilo[ipair],ihi[ipair],error);
@@ -108,6 +121,7 @@ ComputeRDF::ComputeRDF(LAMMPS *lmp, int narg, char **arg) :
     }
   }
 
+  // zero nrdfpair
   int i,j;
   for (i = 1; i <= ntypes; i++)
     for (j = 1; j <= ntypes; j++)
@@ -123,7 +137,7 @@ ComputeRDF::ComputeRDF(LAMMPS *lmp, int narg, char **arg) :
 
   memory->create(hist,npairs,nbin,"rdf:hist");
   memory->create(histall,npairs,nbin,"rdf:histall");
-  memory->create(array,nbin,1+2*npairs,"rdf:array");
+  memory->create(array,nbin,1+2*npairs,"rdf:array"); // don't know why it doesn't use size_array_cols and size_arrow_rows
   typecount = new int[ntypes+1];
   icount = new int[npairs];
   jcount = new int[npairs];
@@ -219,7 +233,7 @@ void ComputeRDF::init_list(int /*id*/, NeighList *ptr)
 
 void ComputeRDF::init_norm()
 {
-  int i,j,m;
+  int i,j,m; // i and j are usually atom indices or atom type indices, m is the histogram index.
 
   // count atoms of each type that are also in group
 
@@ -231,6 +245,8 @@ void ComputeRDF::init_norm()
   for (i = 1; i <= ntypes; i++) typecount[i] = 0;
   for (i = 0; i < nlocal; i++)
     if (mask[i] & groupbit) typecount[type[i]]++;
+  // groupbit is inherited from compute class and is set by the group-ID argument in the input script
+  // mask[i] is a bit mask of the ith atom specifying which groups it is a part of
 
   // icount = # of I atoms participating in I,J pairs for each histogram
   // jcount = # of J atoms participating in I,J pairs for each histogram
@@ -247,6 +263,7 @@ void ComputeRDF::init_norm()
         if (i == j) duplicates[m] += typecount[i];
   }
 
+  // sum icount, jcount and duplicates of all processors and comunicate to all processors
   int *scratch = new int[npairs];
   MPI_Allreduce(icount,scratch,npairs,MPI_INT,MPI_SUM,world);
   for (i = 0; i < npairs; i++) icount[i] = scratch[i];
@@ -287,6 +304,13 @@ void ComputeRDF::compute_array()
   ilist = list->ilist;
   numneigh = list->numneigh;
   firstneigh = list->firstneigh;
+  /* from neigh_list.h:
+   * int inum;            // # of I atoms neighbors are stored for
+   * int gnum;            // # of ghost atoms neighbors are stored for
+   * int *ilist;          // local indices of I atoms
+   * int *numneigh;       // # of J neighbors for each I atom
+   * int **firstneigh;    // ptr to 1st J int value of each I atom
+   */
 
   // zero the histogram counts
 
@@ -309,9 +333,9 @@ void ComputeRDF::compute_array()
   double *special_lj = force->special_lj;
   int newton_pair = force->newton_pair;
 
-  for (ii = 0; ii < inum; ii++) {
+  for (ii = 0; ii < inum; ii++) { // ii is neighbor list index of central atom
     i = ilist[ii];
-    if (!(mask[i] & groupbit)) continue;
+    if (!(mask[i] & groupbit)) continue; // if atom not in group, continue to next atom
     xtmp = x[i][0];
     ytmp = x[i][1];
     ztmp = x[i][2];
@@ -321,9 +345,14 @@ void ComputeRDF::compute_array()
 
     for (jj = 0; jj < jnum; jj++) {
       j = jlist[jj];
-      factor_lj = special_lj[sbmask(j)];
+      factor_lj = special_lj[sbmask(j)]; // sbmask takes the two highest bits of j, returns > 0 if j has a special bond
       factor_coul = special_coul[sbmask(j)];
-      j &= NEIGHMASK;
+      j &= NEIGHMASK; // remove special bits from j and turn it into the index number
+      /* from lmptype.h:
+       * // reserve 2 highest bits in molecular system neigh list for special bonds flag
+       * // reserve 3rd highest bit in neigh list for fix neigh/history flag
+       * // max local + ghost atoms per processor = 2^29 - 1
+       */
 
       // if both weighting factors are 0, skip this pair
       // could be 0 and still be in neigh list for long-range Coulombics
@@ -331,11 +360,11 @@ void ComputeRDF::compute_array()
 
       if (factor_lj == 0.0 && factor_coul == 0.0) continue;
 
-      if (!(mask[j] & groupbit)) continue;
+      if (!(mask[j] & groupbit)) continue; // if j not in group, continue to next atom
       jtype = type[j];
       ipair = nrdfpair[itype][jtype];
       jpair = nrdfpair[jtype][itype];
-      if (!ipair && !jpair) continue;
+      if (!ipair && !jpair) continue; // if the pair of atom types of j and i is not in any of the histograms, continue to next atom
 
       delx = xtmp - x[j][0];
       dely = ytmp - x[j][1];
@@ -369,7 +398,7 @@ void ComputeRDF::compute_array()
   double constant,vfrac,gr,ncoord,rlower,rupper,normfac;
 
   if (domain->dimension == 3) {
-    constant = 4.0*MY_PI / (3.0*domain->xprd*domain->yprd*domain->zprd);
+    constant = 4.0*MY_PI / (3.0*domain->xprd*domain->yprd*domain->zprd); // 4pi/3Volume
 
     for (m = 0; m < npairs; m++) {
       normfac = (icount[m] > 0) ? static_cast<double>(jcount[m])
@@ -378,8 +407,9 @@ void ComputeRDF::compute_array()
       for (ibin = 0; ibin < nbin; ibin++) {
         rlower = ibin*delr;
         rupper = (ibin+1)*delr;
-        vfrac = constant * (rupper*rupper*rupper - rlower*rlower*rlower);
+        vfrac = constant * (rupper*rupper*rupper - rlower*rlower*rlower); // volume percentage of shell
         if (vfrac * normfac != 0.0)
+            // normfac * icount = icount*jcount - duplicates = total pairs in this RDF
           gr = histall[m][ibin] / (vfrac * normfac * icount[m]);
         else gr = 0.0;
         if (icount[m] != 0)

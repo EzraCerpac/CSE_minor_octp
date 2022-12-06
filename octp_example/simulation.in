@@ -32,6 +32,7 @@ variable Nwrit equal 100000   # Nwrite for transport properties (fix ordern: wri
 
 variable Nrdfe equal 100      # Nevery for RDF (fix ave/time)
 variable Nrdfw equal 1000     # Nwrite for RDF (compute rdf/ext: write every (Nrdfw*Nrdfe))
+variable Nrdff equal 6000     # Nwrite for RDF (compute rdf/force: write every (Nrdfw*Nrdfe))
 variable binnum equal 2000    # Number of bins for RDF
 
 #################### ATOM DEFINITION and FORCEFIELD ####################
@@ -95,8 +96,9 @@ compute rdfs all rdf/ext Nbin ${binnum} Nwrite ${Nrdfw} file rdf.dat
 fix f4 all ave/time 1 1 ${Nrdfe} c_rdfs
 
 log log.test
-compute rdff all rdf/force ${binnum}
-fix f5 all ave/time 1 ${Nrdfe} ${Nrun} c_rdff[*] file rdf_force.dat mode vector
+comm_modify cutoff 16.1
+compute rdff all rdf/force ${binnum} cutoff 8.0
+fix f5 all ave/time 1 ${Nrdff} ${Nrun} c_rdff[*] file rdf_force.dat mode vector
 log log.lammps
 
 # Thermo style for outputing system properties to the log file
