@@ -40,11 +40,11 @@
 using namespace LAMMPS_NS;
 using namespace MathConst;
 
-//#ifdef DEBUG
+#ifdef DEBUG
 #define LOG(x) utils::logmesg(lmp, x)
-//#else
-//#define LOG(x)
-//#endif
+#else
+#define LOG(x)
+#endif
 
 /* ---------------------------------------------------------------------- */
 
@@ -278,6 +278,7 @@ void ComputeRDFForce::compute_array() {
     if (icompute < 0) error->all(FLERR, "Compute rdf/force requires compute T");
     Compute *tcompute = modify->compute[icompute];
     t = tcompute->compute_scalar();
+    LOG("T = " << t);
 
     if (natoms_old != atom->natoms) {
         dynamic = 1;
@@ -315,9 +316,6 @@ void ComputeRDFForce::compute_array() {
 
     double **x = atom->x;
     double **f = atom->f;
-
-//    LOG("force = " + std::to_string(f[0][0]) + " " + std::to_string(f[0][1]) + " " + std::to_string(f[0][2])) << std::endl;
-
     int *type = atom->type;
     int *mask = atom->mask;
     int nlocal = atom->nlocal;
@@ -359,7 +357,7 @@ void ComputeRDFForce::compute_array() {
             delz = ztmp - x[j][2];
             // No box checks implemented
             r = sqrt(delx * delx + dely * dely + delz * delz);
-            Ff = 2*((f[i][0]) * delx + (f[i][1]) * dely + (f[i][2]) * delz) / (r * r * r);
+            Ff = ((f[i][0] - f[j][0]) * delx + (f[i][1] - f[j][1]) * dely + (f[i][2] - f[j][2]) * delz) / (r * r * r);
             ibin = static_cast<int> (r * delrinv);
             if (ibin >= nbin) continue;
 

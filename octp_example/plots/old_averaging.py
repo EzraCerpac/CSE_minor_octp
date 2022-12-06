@@ -32,7 +32,7 @@ def load_data(path: str = 'data.pkl', n: int = 1000) -> tuple[np.ndarray, np.nda
     rdf_octp = np.loadtxt('../rdf.dat', max_rows=2000)
     rdf_force = []
     for i in Bar('Loading').iter(range(n)):
-        rdf_force.append(np.loadtxt('../rdf_force_one_mil.dat', skiprows=4 + i * 2001, max_rows=2000))
+        rdf_force.append(np.loadtxt('../rdf_force.dat', skiprows=4 + i * 2001, max_rows=2000))
     rdf_force = np.mean(rdf_force, axis=0)
     with open(path, 'wb') as f:
         pickle.dump((rdf_octp, rdf_force), f)

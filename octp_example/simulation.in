@@ -95,8 +95,7 @@ compute rdfs all rdf/ext Nbin ${binnum} Nwrite ${Nrdfw} file rdf.dat
 fix f4 all ave/time 1 1 ${Nrdfe} c_rdfs
 
 log log.test
-comm_modify cutoff 16.1
-compute rdff all rdf/force ${binnum} cutoff 8.0
+compute rdff all rdf/force ${binnum}
 fix f5 all ave/time 1 ${Nrdfe} ${Nrun} c_rdff[*] file rdf_force.dat mode vector
 log log.lammps
 
