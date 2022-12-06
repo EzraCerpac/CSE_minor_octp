@@ -1,0 +1,33 @@
+#!/bin/bash
+
+input=../in/in.methane
+n=6
+lmp=~/Software/lammps/lammps-15Sep2022/src
+
+# check if user specified $1
+if [ -z "$1" ]; then
+    echo "No argument supplied"
+    echo "Usage: ./runMD.sh <output directory to be created>"
+    exit 1
+fi
+
+
+# check if $1 is an existing directory
+if [ -d "$1" ]; then
+    echo "Directory $1 exists."
+    exit 1
+fi
+
+# create directory $1
+mkdir $1
+# copy the directory "in" and its contents into 
+# the new directory $1
+cp -r in $1/input_used
+
+
+cd $1
+mpirun -n $n $lmp/lmp_mpi -in $input
+wait
+
+
+exit 0
