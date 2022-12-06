@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --exclusive
+#SBATCH -n 48
+#SBATCH -t 24:00:00
+#SBATCH --mem-per-cpu=1G
+
+module load 2022r2
+module load openmpi
+
+lmp=~/MinorProject/lammps-23Jun2022/src/
+srun $lmp/lmp_mpi < simulation.in
+wait
+
+exit 0
