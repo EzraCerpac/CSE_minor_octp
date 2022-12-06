@@ -1,0 +1,10 @@
+# CSE_minor_octp
+
+## Package Requirements (layed out for cmake)
+
+-DPKG_BODY:BOOL=ON
+-DPKG_DIPOLE:BOOL=ON
+-DPKG_KSPACE:BOOL=ON
+-DPKG_MANYBODY:BOOL=ON
+-DPKG_MOLECULE:BOOL=ON
+-DPKG_RIGID:BOOL=ON
