@@ -34,7 +34,7 @@ Neighbor list info ...
   update every 1 steps, delay 0 steps, check yes
   max neighbors/atom: 2000, page size: 100000
   master list distance cutoff = 7
-  ghost atom cutoff = 7
+  ghost atom cutoff = 16.1
   binsize = 3.5, bins = 8 8 8
   2 neighbor lists, perpetual/occasional/extra = 1 1 0
   (1) pair lj/cut, perpetual
@@ -42,12 +42,12 @@ Neighbor list info ...
       pair build: half/bin/newton
       stencil: half/bin/3d
       bin: standard
-  (2) compute rdf/force, occasional, copy from (1)
-      attributes: half, newton on
-      pair build: copy
-      stencil: none
-      bin: none
-Per MPI rank memory allocation (min/avg/max) = 13.28 | 13.28 | 13.28 Mbytes
+  (2) compute rdf/force, occasional
+      attributes: half, newton on, cut 10
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 16.96 | 16.96 | 16.96 Mbytes
    Step          Temp        f_TempAve        Press        f_PressAve       PotEng         KinEng         TotEng    
          0   308.83828      0              7469.1063      0             -370.23399      470.42059      100.1866     
      10000   300.29557      297.51362      6941.7465      7255.981      -395.48514      457.40839      61.923257    
@@ -60,25 +60,25 @@ Per MPI rank memory allocation (min/avg/max) = 13.28 | 13.28 | 13.28 Mbytes
      80000   322.20714      299.79124      7435.6767      7318.2548     -375.02504      490.78396      115.75892    
      90000   308.67617      298.47928      7097.2215      7290.9864     -390.00882      470.17367      80.164845    
     100000   310.48323      296.89286      7291.6594      7288.7273     -380.67074      472.92618      92.255438    
-Loop time of 53.1528 on 8 procs for 100000 steps with 512 atoms
+Loop time of 60.4559 on 8 procs for 100000 steps with 512 atoms
 
-Performance: 162.550 ns/day, 0.148 hours/ns, 1881.369 timesteps/s
-99.0% CPU use with 1 MPI tasks x 8 OpenMP threads
+Performance: 142.914 ns/day, 0.168 hours/ns, 1654.099 timesteps/s
+99.8% CPU use with 1 MPI tasks x 8 OpenMP threads
 
 MPI task timing breakdown:
 Section |  min time  |  avg time  |  max time  |%varavg| %total
 ---------------------------------------------------------------
-Pair    | 36.231     | 36.231     | 36.231     |   0.0 | 68.16
-Bond    | 0.024496   | 0.024496   | 0.024496   |   0.0 |  0.05
-Neigh   | 2.4407     | 2.4407     | 2.4407     |   0.0 |  4.59
-Comm    | 2.736      | 2.736      | 2.736      |   0.0 |  5.15
-Output  | 0.0084817  | 0.0084817  | 0.0084817  |   0.0 |  0.02
-Modify  | 10.929     | 10.929     | 10.929     |   0.0 | 20.56
-Other   |            | 0.7829     |            |       |  1.47
+Pair    | 36.581     | 36.581     | 36.581     |   0.0 | 60.51
+Bond    | 0.021548   | 0.021548   | 0.021548   |   0.0 |  0.04
+Neigh   | 3.1479     | 3.1479     | 3.1479     |   0.0 |  5.21
+Comm    | 9.6346     | 9.6346     | 9.6346     |   0.0 | 15.94
+Output  | 0.0049156  | 0.0049156  | 0.0049156  |   0.0 |  0.01
+Modify  | 10.061     | 10.061     | 10.061     |   0.0 | 16.64
+Other   |            | 1.005      |            |       |  1.66
 
 Nlocal:            512 ave         512 max         512 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
-Nghost:           1383 ave        1383 max        1383 min
+Nghost:           5322 ave        5322 max        5322 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
 Neighs:          11061 ave       11061 max       11061 min
 Histogram: 1 0 0 0 0 0 0 0 0 0
